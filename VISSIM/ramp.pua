@@ -1,0 +1,13 @@
+$SIGNAL_GROUPS
+$
+ramp  1
+
+$STAGES
+$
+Stage_1  ramp
+
+$STARTING_STAGE
+$
+Stage_1
+
+$END

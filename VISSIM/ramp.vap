@@ -1,0 +1,69 @@
+PROGRAM ramp; /* C:\Users\hyang\Desktop\HYANG\20.08.21_convert\含控制號誌\(single)DDQN_1s_MPRATE_addmove_shallownn_is_single_agent _param1\ramp.vap */
+
+VAP_FREQUENCY 1;
+
+CONST 
+            LANE_NUM = 2,
+            KR = 60,
+            OCC_OPT = 14.84,
+            CC = 72,
+            cRamp = 1200,
+            rmin = 200,
+            rmax = 800,
+            warmT = 1800;
+
+/* ARRAYS */ 
+ARRAY 
+            detNo[ 3, 1 ] = [[6], [7], [8]];
+
+/* SUBROUTINES */ 
+
+/* PARAMETERS DEPENDENT ON SCJ-PROGRAM */ 
+            
+/* EXPRESSIONS */ 
+
+/* MAIN PROGRAM */ 
+
+S00Z001:    IF Init=0 THEN
+S01Z001:      start(Timer); start( Timer2 );
+S01Z002:      Init:=1; Set_sg( 1 , green )
+            END;
+S00Z004:    IF NOT (Timer <= warmT) THEN
+S00Z006:      IF Timer2 >= CC THEN
+S01Z006:        Stop( Timer2 ); Reset( Timer2 ); laneNo:=1;
+S01Z008:        IF laneNo <= LANE_NUM THEN
+S02Z008:          IF detNo[ laneNo, 1 ] > 0 THEN
+S03Z008:            oout := oout + Occup_rate( detNo[ laneNo, 1 ]);
+S03Z009:            laneNo := laneNo + 1;
+                    GOTO S01Z008
+                  ELSE
+S01Z010:            qRamp := (Front_ends( 4 ))+ (Front_ends( 5 )); Clear_front_ends( 4); Clear_front_ends( 5);
+S01Z011:            oout := (oout / LANE_NUM)*100;
+S01Z012:            cqRamp := qRamp/3600*CC + KR * (OCC_OPT - oout);
+S01Z013:            IF cqRamp < rmin THEN
+S02Z013:              cqRamp := rmin;
+S01Z016:              greenT := cqRamp*CC/cRamp; Record_value( 1 , qRamp ); Record_value( 2 , cqRamp ); Record_value( 3 , oout ); oout := 0;
+S01Z017:              start( Timer2 ); Set_sg( 1 , green );
+S00Z019:              IF Current_state( 1 , green ) THEN
+S01Z019:                IF T_green( 1 ) >= greenT THEN
+S02Z019:                  Set_sg( 1 , amber ); Set_sg( 1 , red )
+                        END
+                      END
+                    ELSE
+S01Z014:              IF cqRamp > rmax THEN
+S02Z014:                cqRamp := rmax;
+                        GOTO S01Z016
+                      ELSE
+                        GOTO S01Z016
+                      END
+                    END
+                  END
+                ELSE
+                  GOTO S01Z010
+                END
+              ELSE
+                GOTO S00Z019
+              END
+            END
+PROG_ENDE:    .
+/*----------------------------------------------------------------------------*/
